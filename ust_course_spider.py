@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
 #HKUST ARR Schedule WebSpider(WIP)
 #Author: Patrick Wu(@patrick330602)
 import os
-from time import gmtime, strftime
-import requests
+import shutil
+import time
 import json
+import requests
 from bs4 import BeautifulSoup as bs
 
 ver = "v0.1"
@@ -13,7 +15,7 @@ baseJsonStr = {}
 
 '''Beautify Print'''
 def info_print(input):
-    print("["+strftime("%H:%M:%S", gmtime())+"]"+input)
+    print("["+time.strftime("%H:%M:%S", time.localtime())+"]"+input)
 
 '''Convert Raw Course HTML to json object(WIP)'''
 def arr2json(input):
@@ -49,6 +51,7 @@ for x in dept_link:
         data_count += 1
         total_count += 1
     info_print("complete retrive "+str(data_count)+" course(s).")
+shutil.rmtree('courses')
 result = open("courses_dict.json", "w+")
 result.write(json.dumps(baseJsonStr))
 info_print("Action complete. Retrived "+str(total_count)+" course(s).")
