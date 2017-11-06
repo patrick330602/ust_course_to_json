@@ -2,8 +2,10 @@
 
 Some small spiders written by me.
 
+Dependencies:`BeautifulSoup4`,`requests`
+
 - `ust_course_spider.py` HKUST ARR Course WebSpider(WIP)
-  Depedency:`BeautifulSoup4`,`requests`
+  
 
 ## License
 
