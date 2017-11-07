@@ -26,18 +26,21 @@ def course2deptcode(input):
 def title2creditname(input):
     '''Convert title to credit and name
     '''
-    credit = re.search('\d',re.search('\([\s\S]+\)',input))
-    return credit
+    credit_untrimed = re.search('\([\s\S]+\)',input)
+    credit = (re.search('\d',credit_untrimed[0]))[0]
+    name_untrimed = re.search('-\s[\s\S]+\s\(', input)
+    name = name_untrimed[0].replace('- ','').replace(' (','')
+    return credit, name
 
 def arr2json(input):
-    '''Convert Raw Course HTML to json object(WIP)
+    '''Convert Raw Course HTML to json object
     '''
     course_soup = bs(str(input), 'lxml')
     course_title = course_soup.find('a').get('name')
     source = open("courses/"+course_title+".html","w+")
     dept,code = course2deptcode(course_title)
-    credit_and_name = course_soup.find('h2').next
-    baseJsonStr['courses'][course_title] = {'id': course_title, 'department': dept, 'code':code, 'details':{}, 'sections':[]}
+    credit,name = title2creditname(str(course_soup.find('h2').next))
+    baseJsonStr['courses'][course_title] = {'id': course_title, 'department': dept, 'code':code,'credit':credit,'name': name, 'details':{}, 'sections':[]}
     source.write(str(course_soup))
 
 def main():
