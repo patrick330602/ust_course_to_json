@@ -38,23 +38,25 @@ def arr2json(input):
     course_soup = bs(str(input), 'lxml')
     course_title = course_soup.find('a').get('name')
     source = open("courses/"+course_title+".html","w+")
-
+    info_print(course_title)
     #Overivew
     dept,code = course2deptcode(course_title)
     credit,name = title2creditname(str(course_soup.find('h2').next))
 
     #Detail
-    detail_data = []
+    detail_data = {}
     detail_soup = course_soup.find('table', attrs={'width':'400'})
-    rows = detail_soup.find_all('tr')
-    for row in rows:
-        cols = row.find_all('td')
-        cols = [ele.text.strip() for ele in cols]
-        detail_data.append([ele for ele in cols if ele])
+    for row in detail_soup.find_all('tr'):
+        headers = row.find('th')
+        subdata = row.find('td')
+        if str(headers.next) == "INTENDED":
+            break
+        detail_data[str(headers.next)] = str(subdata.next)
 
-    baseJsonStr['courses'][course_title] = {'id': course_title, 'department': dept, 'code':code,'credit':credit,'name': name, 'details':{}, 'sections':[]}
+    desc = str(detail_data["DESCRIPTION"])
 
-    baseJsonStr['courses'][course_title]['details']['description'] = detail_data[-1]
+    baseJsonStr['courses'][course_title] = {'id': course_title, 'department': dept, 'code':code,'credit':credit,'name': name, 'details':{'description':desc}, 'sections':[]}
+
     source.write(str(course_soup))
 
 def main():
