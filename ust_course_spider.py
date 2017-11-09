@@ -10,7 +10,8 @@ import requests
 from bs4 import BeautifulSoup as bs
 
 IS_DEBUG = False
-DEBUG_COURSE = "HUMA"
+DEBUG_COURSE = "ACCT"
+
 dept_links = []
 baseJsonStr = {}
 
@@ -33,16 +34,53 @@ def title2creditname(input):
     name = name_untrimed[0].replace('- ', '').replace(' (', '')
     return credit, name
 
+def sections2list(input, course_title):
+    data_keeper = []
+    counter = -1
+
+    rows = input.findChildren(['th', 'tr'])
+    for row in rows:
+        j = 0
+        cells = row.findChildren('td')
+        if len(cells) == 9:
+            del data_keeper[:]
+
+            for cell in cells:
+                value = cell.get_text()
+                data_keeper.append(value)
+
+                if IS_DEBUG:
+                    print(str(counter+1)+","+str(j)+":"+value)
+
+            baseJsonStr['courses'][course_title]['sections'].append({ 'name' : data_keeper[0], 'classes':[{'datetime': data_keeper[1], 'location': data_keeper[2]}], 'instructors': data_keeper[3], 'quota': data_keeper[4], 'enrol': data_keeper[5], 'avail': data_keeper[6], 'wait': data_keeper[7], 'remarks': data_keeper[8]})
+            counter += 1
+            
+        elif len(cells) == 3:
+            merged_int = 1
+
+            for cell in cells:
+                value = cell.get_text()
+                data_keeper[merged_int] = value
+                merged_int += 1
+
+                if IS_DEBUG:
+                    print("*** "+str(counter+1)+","+str(j)+":"+value)
+
+            baseJsonStr['courses'][course_title]['sections'][counter]['classes'].append({'datetime': data_keeper[1], 'location': data_keeper[2]})
+
 def arr2json(input):
     '''Convert Raw Course HTML to json object
     '''
     course_soup = bs(str(input), 'lxml')
     course_title = course_soup.find('a').get('name')
+    info_print(course_title)
     for b_s in course_soup.find_all("br"):
         b_s.replace_with("\n")
+
     if IS_DEBUG:
         result = open(course_title+".html", "w+")
         result.write(str(course_soup.contents))
+
     #Overivew
     dept, code = course2deptcode(course_title)
     credit, name = title2creditname(str(course_soup.find('h2').next))
@@ -59,15 +97,19 @@ def arr2json(input):
     baseJsonStr['courses'][course_title]['details'] = {}
     
     detail_soup = course_soup.find('table', attrs={'width':'400'})
+
     for row in detail_soup.find_all('tr'):
         headers = row.find('th')
         subdata = row.find('td')
+
         if str(headers.next) == "INTENDED":
             break
+
         detail_data[str(headers.next)] = subdata.get_text()
 
     detail_strings = ['ATTRIBUTES', 'VECTOR', 'PRE-REQUISITE', 'CO-REQUISITE', 'PREVIOUS CODE', 'EXCLUSION']
     for dstring in detail_strings:
+
         if dstring in detail_data:
             content = detail_data[dstring]
             baseJsonStr['courses'][course_title]['details'][dstring.lower()] = content
@@ -78,7 +120,8 @@ def arr2json(input):
 
     #Sections
     baseJsonStr['courses'][course_title]['sections'] = []
-    detail_soup = course_soup.find('table', attrs={'class':'sections'})
+    sections_soup = course_soup.find('table', attrs={'width':'1012'})
+    sections2list(sections_soup, course_title)
 
 def main():
     total_count = 0
@@ -94,9 +137,11 @@ def main():
 
     for cotitle in base_course:
         dept_links.append(cotitle.get("href"))
+
     if IS_DEBUG:
         del dept_links[:]
         dept_links.append('/wcq/cgi-bin/1710/subject/'+ DEBUG_COURSE)
+
     for link in dept_links:
         url = 'https://w5.ab.ust.hk'+link
         req = requests.get(url)
@@ -105,11 +150,13 @@ def main():
         soup = bs(res, 'lxml')
         needed_data = soup.select("[class~=course]")
         data_count = 0
+
         for course in needed_data:
             arr2json(course)
             data_count += 1
             total_count += 1
         info_print("complete retrive "+str(data_count)+" course(s) from "+url+".")
+
     result = open("courses_dict.json", "w+")
     result.write(json.dumps(baseJsonStr))
     info_print("Action complete. Retrived "+str(total_count)+" course(s).")
