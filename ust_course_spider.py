@@ -39,21 +39,10 @@ def arr2json(input):
     course_title = course_soup.find('a').get('name')
     source = open("courses/"+course_title+".html","w+")
     source.write(str(course_soup))
+
     #Overivew
     dept, code = course2deptcode(course_title)
     credit, name = title2creditname(str(course_soup.find('h2').next))
-
-    #Detail
-    detail_data = {}
-    detail_soup = course_soup.find('table', attrs={'width':'400'})
-    for row in detail_soup.find_all('tr'):
-        headers = row.find('th')
-        subdata = row.find('td')
-        if str(headers.next) == "INTENDED":
-            break
-        detail_data[str(headers.next)] = subdata.next
-    desc = detail_data['DESCRIPTION']
-    desc = re.sub(r'[\xc2-\xf4][\x80-\xbf]+',lambda m: m.group(0).encode('latin1').decode('utf8'),desc)
 
     baseJsonStr['courses'][course_title] = {}
     baseJsonStr['courses'][course_title]['id'] = course_title
@@ -63,11 +52,36 @@ def arr2json(input):
     baseJsonStr['courses'][course_title]['name'] = name
 
     #Details
+    detail_data = {}
     baseJsonStr['courses'][course_title]['details'] = {}
-    baseJsonStr['courses'][course_title]['details']['description'] = desc
-    baseJsonStr['courses'][course_title]['sections'] = []
-
     
+    detail_soup = course_soup.find('table', attrs={'width':'400'})
+    for row in detail_soup.find_all('tr'):
+        headers = row.find('th')
+        subdata = row.find('td')
+        if str(headers.next) == "INTENDED":
+            break
+        detail_data[str(headers.next)] = subdata.next
+    desc = detail_data['DESCRIPTION']
+    desc = re.sub(r'[\xc2-\xf4][\x80-\xbf]+',lambda m: m.group(0).encode('latin1').decode('utf8'),desc)
+    baseJsonStr['courses'][course_title]['details']['description'] = desc
+    if 'VECTOR' in detail_data:
+        vct = detail_data['VECTOR']
+        baseJsonStr['courses'][course_title]['details']['vector'] = vct
+    if 'PRE-REQUISITE' in detail_data:
+        pr = detail_data['PRE-REQUISITE']
+        baseJsonStr['courses'][course_title]['details']['pre-requisite'] = pr
+    if 'CO-REQUISITE' in detail_data:
+        cr = detail_data['CO-REQUISITE']
+        baseJsonStr['courses'][course_title]['details']['co-requisite'] = cr
+    if 'PREVIOUS CODE' in detail_data:
+        pc = detail_data['PREVIOUS CODE']
+        baseJsonStr['courses'][course_title]['details']['previous code'] = pc
+    if 'EXCLUSION' in detail_data:
+        ex = detail_data['EXCLUSION']
+        baseJsonStr['courses'][course_title]['details']['exclusion'] = ex
+
+    baseJsonStr['courses'][course_title]['sections'] = []
 
 def main():
     total_count = 0
