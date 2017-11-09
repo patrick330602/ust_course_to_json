@@ -1,10 +1,11 @@
 # Web Spiders Repo
+> *These spiders don't bite people, they bite Internet. *
 
-Some small spiders written by me.
+Some small webspiders written by me.
 
-Dependencies:`BeautifulSoup4`,`requests`
+Dependencies can be found in `requirements` folder
 
-- `ust_course_spider.py` HKUST ARR Course WebSpider(WIP)
+- `ust_course_spider.py` - HKUST ARR Course WebSpider
   
 
 ## License
