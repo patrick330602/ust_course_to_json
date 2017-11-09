@@ -9,6 +9,8 @@ import re
 import requests
 from bs4 import BeautifulSoup as bs
 
+IS_DEBUG = False
+DEBUG_COURSE = "HUMA"
 dept_links = []
 baseJsonStr = {}
 
@@ -36,6 +38,11 @@ def arr2json(input):
     '''
     course_soup = bs(str(input), 'lxml')
     course_title = course_soup.find('a').get('name')
+    for b_s in course_soup.find_all("br"):
+        b_s.replace_with("\n")
+    if IS_DEBUG:
+        result = open(course_title+".html", "w+")
+        result.write(str(course_soup.contents))
     #Overivew
     dept, code = course2deptcode(course_title)
     credit, name = title2creditname(str(course_soup.find('h2').next))
@@ -57,20 +64,21 @@ def arr2json(input):
         subdata = row.find('td')
         if str(headers.next) == "INTENDED":
             break
-        detail_data[str(headers.next)] = subdata.next
-    
-    detail_strings = ['ATTRIBUTES','VECTOR', 'PRE-REQUISITE', 'CO-REQUISITE', 'PREVIOUS CODE', 'EXCLUSION']
+        detail_data[str(headers.next)] = subdata.get_text()
+
+    detail_strings = ['ATTRIBUTES', 'VECTOR', 'PRE-REQUISITE', 'CO-REQUISITE', 'PREVIOUS CODE', 'EXCLUSION']
     for dstring in detail_strings:
         if dstring in detail_data:
             content = detail_data[dstring]
             baseJsonStr['courses'][course_title]['details'][dstring.lower()] = content
-
+    
     desc = detail_data['DESCRIPTION']
-    desc = re.sub(r'[\xc2-\xf4][\x80-\xbf]+',lambda m: m.group(0).encode('latin1').decode('utf8'),desc)
+    desc = re.sub(r'[\xc2-\xf4][\x80-\xbf]+', lambda m: m.group(0).encode('latin1').decode('utf8'), desc)
     baseJsonStr['courses'][course_title]['details']['description'] = desc
 
     #Sections
     baseJsonStr['courses'][course_title]['sections'] = []
+    detail_soup = course_soup.find('table', attrs={'class':'sections'})
 
 def main():
     total_count = 0
@@ -86,7 +94,9 @@ def main():
 
     for cotitle in base_course:
         dept_links.append(cotitle.get("href"))
-
+    if IS_DEBUG:
+        del dept_links[:]
+        dept_links.append('/wcq/cgi-bin/1710/subject/'+ DEBUG_COURSE)
     for link in dept_links:
         url = 'https://w5.ab.ust.hk'+link
         req = requests.get(url)
