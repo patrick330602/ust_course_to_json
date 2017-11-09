@@ -36,9 +36,6 @@ def arr2json(input):
     '''
     course_soup = bs(str(input), 'lxml')
     course_title = course_soup.find('a').get('name')
-    source = open("courses/"+course_title+".html","w+")
-    source.write(str(course_soup))
-
     #Overivew
     dept, code = course2deptcode(course_title)
     credit, name = title2creditname(str(course_soup.find('h2').next))
@@ -62,7 +59,7 @@ def arr2json(input):
             break
         detail_data[str(headers.next)] = subdata.next
     
-    detail_strings = ['VECTOR', 'PRE-REQUISITE', 'CO-REQUISITE', 'PREVIOUS CODE', 'EXCLUSION']
+    detail_strings = ['ATTRIBUTES','VECTOR', 'PRE-REQUISITE', 'CO-REQUISITE', 'PREVIOUS CODE', 'EXCLUSION']
     for dstring in detail_strings:
         if dstring in detail_data:
             content = detail_data[dstring]
@@ -89,8 +86,6 @@ def main():
 
     for cotitle in base_course:
         dept_links.append(cotitle.get("href"))
-    if not os.path.exists("courses"):
-        os.makedirs("courses")
 
     for link in dept_links:
         url = 'https://w5.ab.ust.hk'+link
@@ -105,7 +100,6 @@ def main():
             data_count += 1
             total_count += 1
         info_print("complete retrive "+str(data_count)+" course(s) from "+url+".")
-    shutil.rmtree('courses')
     result = open("courses_dict.json", "w+")
     result.write(json.dumps(baseJsonStr))
     info_print("Action complete. Retrived "+str(total_count)+" course(s).")
