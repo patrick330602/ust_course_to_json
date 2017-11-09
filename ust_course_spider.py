@@ -7,10 +7,10 @@ import time
 import json
 import re
 import requests
+import urllib.request
 from bs4 import BeautifulSoup as bs
 
-ver = "v0.1"
-dept_link = []
+dept_links = []
 baseJsonStr = {}
 
 def info_print(input):
@@ -21,15 +21,15 @@ def info_print(input):
 def course2deptcode(input):
     '''Convert course code to department code and numerial course code
     '''
-    return input[:4],input[(len(input)-4):] 
+    return input[:4], input[(len(input)-4):] 
 
 def title2creditname(input):
     '''Convert title to credit and name
     '''
-    credit_untrimed = re.search('\([\s\S]+\)',input)
-    credit = (re.search('\d',credit_untrimed[0]))[0]
+    credit_untrimed = re.search('\([\s\S]+\)', input)
+    credit = (re.search('\d', credit_untrimed[0]))[0]
     name_untrimed = re.search('-\s[\s\S]+\s\(', input)
-    name = name_untrimed[0].replace('- ','').replace(' (','')
+    name = name_untrimed[0].replace('- ', '').replace(' (', '')
     return credit, name
 
 def arr2json(input):
@@ -38,10 +38,10 @@ def arr2json(input):
     course_soup = bs(str(input), 'lxml')
     course_title = course_soup.find('a').get('name')
     source = open("courses/"+course_title+".html","w+")
-    info_print(course_title)
+    source.write(str(course_soup))
     #Overivew
-    dept,code = course2deptcode(course_title)
-    credit,name = title2creditname(str(course_soup.find('h2').next))
+    dept, code = course2deptcode(course_title)
+    credit, name = title2creditname(str(course_soup.find('h2').next))
 
     #Detail
     detail_data = {}
@@ -51,33 +51,43 @@ def arr2json(input):
         subdata = row.find('td')
         if str(headers.next) == "INTENDED":
             break
-        detail_data[str(headers.next)] = str(subdata.next)
+        detail_data[str(headers.next)] = subdata.next
+    desc = detail_data['DESCRIPTION']
+    desc = re.sub(r'[\xc2-\xf4][\x80-\xbf]+',lambda m: m.group(0).encode('latin1').decode('utf8'),desc)
 
-    desc = str(detail_data["DESCRIPTION"])
+    baseJsonStr['courses'][course_title] = {}
+    baseJsonStr['courses'][course_title]['id'] = course_title
+    baseJsonStr['courses'][course_title]['department'] = dept
+    baseJsonStr['courses'][course_title]['code'] = code
+    baseJsonStr['courses'][course_title]['credit'] = credit
+    baseJsonStr['courses'][course_title]['name'] = name
 
-    baseJsonStr['courses'][course_title] = {'id': course_title, 'department': dept, 'code':code,'credit':credit,'name': name, 'details':{'description':desc}, 'sections':[]}
+    #Details
+    baseJsonStr['courses'][course_title]['details'] = {}
+    baseJsonStr['courses'][course_title]['details']['description'] = desc
+    baseJsonStr['courses'][course_title]['sections'] = []
 
-    source.write(str(course_soup))
+    
 
 def main():
     total_count = 0
     baseJsonStr['courses'] = {}
 
-    info_print("HKUST ARR Schdule WebSpider "+ver)
+    info_print("HKUST ARR Schdule WebSpider")
     info_print("Constructing connections...")
     base_req = requests.get("https://w5.ab.ust.hk/wcq/cgi-bin/")
-    info_print("Connection established.")
+    base_req.encoding = 'utf-8'
     base_res = base_req.text
-    base_soup = bs(base_res, 'lxml')
+    base_soup = bs(base_res,'lxml')
     base_course = base_soup.select("div.depts > a")
 
     for cotitle in base_course:
-        dept_link.append(cotitle.get("href"))
+        dept_links.append(cotitle.get("href"))
     if not os.path.exists("courses"):
         os.makedirs("courses")
 
-    for x in dept_link:
-        url = 'https://w5.ab.ust.hk'+x
+    for link in dept_links:
+        url = 'https://w5.ab.ust.hk'+link
         req = requests.get(url)
         res = req.text
 
@@ -89,7 +99,7 @@ def main():
             data_count += 1
             total_count += 1
         info_print("complete retrive "+str(data_count)+" course(s) from "+url+".")
-    #shutil.rmtree('courses')
+    shutil.rmtree('courses')
     result = open("courses_dict.json", "w+")
     result.write(json.dumps(baseJsonStr))
     info_print("Action complete. Retrived "+str(total_count)+" course(s).")
