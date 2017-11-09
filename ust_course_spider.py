@@ -7,7 +7,6 @@ import time
 import json
 import re
 import requests
-import urllib.request
 from bs4 import BeautifulSoup as bs
 
 dept_links = []
@@ -62,25 +61,18 @@ def arr2json(input):
         if str(headers.next) == "INTENDED":
             break
         detail_data[str(headers.next)] = subdata.next
+    
+    detail_strings = ['VECTOR', 'PRE-REQUISITE', 'CO-REQUISITE', 'PREVIOUS CODE', 'EXCLUSION']
+    for dstring in detail_strings:
+        if dstring in detail_data:
+            content = detail_data[dstring]
+            baseJsonStr['courses'][course_title]['details'][dstring.lower()] = content
+
     desc = detail_data['DESCRIPTION']
     desc = re.sub(r'[\xc2-\xf4][\x80-\xbf]+',lambda m: m.group(0).encode('latin1').decode('utf8'),desc)
     baseJsonStr['courses'][course_title]['details']['description'] = desc
-    if 'VECTOR' in detail_data:
-        vct = detail_data['VECTOR']
-        baseJsonStr['courses'][course_title]['details']['vector'] = vct
-    if 'PRE-REQUISITE' in detail_data:
-        pr = detail_data['PRE-REQUISITE']
-        baseJsonStr['courses'][course_title]['details']['pre-requisite'] = pr
-    if 'CO-REQUISITE' in detail_data:
-        cr = detail_data['CO-REQUISITE']
-        baseJsonStr['courses'][course_title]['details']['co-requisite'] = cr
-    if 'PREVIOUS CODE' in detail_data:
-        pc = detail_data['PREVIOUS CODE']
-        baseJsonStr['courses'][course_title]['details']['previous code'] = pc
-    if 'EXCLUSION' in detail_data:
-        ex = detail_data['EXCLUSION']
-        baseJsonStr['courses'][course_title]['details']['exclusion'] = ex
 
+    #Sections
     baseJsonStr['courses'][course_title]['sections'] = []
 
 def main():
