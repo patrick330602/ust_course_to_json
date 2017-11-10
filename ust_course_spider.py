@@ -2,7 +2,7 @@
 #HKUST ARR Schedule WebSpider(WIP)
 #Author: Patrick Wu(@patrick330602)
 import os
-import shutil
+import sys
 import time
 import json
 import re
@@ -14,6 +14,10 @@ DEBUG_COURSE = "ACCT"
 
 dept_links = []
 baseJsonStr = {}
+
+if len(sys.argv) > 1:
+    if sys.argv[1] == "--debug" :
+        IS_DEBUG = True
 
 def info_print(input):
     '''Beautify Print
@@ -52,7 +56,7 @@ def sections2list(input, course_title):
                 if IS_DEBUG:
                     print(str(counter+1)+","+str(j)+":"+value)
 
-            baseJsonStr['courses'][course_title]['sections'].append({ 'name' : data_keeper[0], 'classes':[{'datetime': data_keeper[1], 'location': data_keeper[2]}], 'instructors': data_keeper[3], 'quota': data_keeper[4], 'enrol': data_keeper[5], 'avail': data_keeper[6], 'wait': data_keeper[7], 'remarks': data_keeper[8]})
+            baseJsonStr['courses'][course_title]['sections'].append({ 'name' : data_keeper[0], 'classes':[{'datetime': data_keeper[1], 'location': data_keeper[2]}], 'instructors': data_keeper[3], 'quota': data_keeper[4], 'enrol': data_keeper[5], 'avail': data_keeper[6], 'wait': data_keeper[7], 'remarks': data_keeper[8].replace("\u00a0", "")})
             counter += 1
             
         elif len(cells) == 3:
