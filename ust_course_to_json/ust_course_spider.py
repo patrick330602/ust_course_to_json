@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup as bs
 IS_DEBUG = False
 DEBUG_COURSE = "ACCT"
 
+course_list = []
 dept_links = []
 baseJsonStr = {}
 
@@ -33,9 +34,9 @@ def title2creditname(input):
     '''Convert title to credit and name
     '''
     credit_untrimed = re.search('\([\s\S]+\)', input)
-    credit = (re.search('\d', credit_untrimed[0]))[0]
+    credit = (re.search('\d', credit_untrimed.group(0))).group(0)
     name_untrimed = re.search('-\s[\s\S]+\s\(', input)
-    name = name_untrimed[0].replace('- ', '').replace(' (', '')
+    name = name_untrimed.group(0).replace('- ', '').replace(' (', '')
     return credit, name
 
 def sections2list(input, course_title):
@@ -77,6 +78,8 @@ def arr2json(input):
     '''
     course_soup = bs(str(input), 'lxml')
     course_title = course_soup.find('a').get('name')
+    course_list.append(course_title)
+
     info_print(course_title)
     for b_s in course_soup.find_all("br"):
         b_s.replace_with("\n")
@@ -161,6 +164,8 @@ def main():
             total_count += 1
         info_print("complete retrive "+str(data_count)+" course(s) from "+url+".")
 
+    result = open("courses_list.json", "w+")
+    result.write(json.dumps(course_list))
     result = open("courses_dict.json", "w+")
     result.write(json.dumps(baseJsonStr))
     info_print("Action complete. Retrived "+str(total_count)+" course(s).")

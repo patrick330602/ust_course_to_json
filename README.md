@@ -1,12 +1,9 @@
 # Web Spiders Repo
 > *These spiders don't bite people, they bite Internet. *
 
-Some small webspiders written by me.
+Some small webspiders written by me. Details of spiders can be found in REAME of each directory.
 
-Dependencies can be found in `requirements` folder
-
-- `ust_course_spider.py` - HKUST ARR Course WebSpider
-  
+- `ust_course_to_json` - HKUST ARR Course WebSpider
 
 ## License
 
