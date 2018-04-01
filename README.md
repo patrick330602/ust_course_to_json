@@ -9,4 +9,7 @@ Demo json file can be found in the directory `demo`.
 
 Built on python3. install requirements by `pip3 install -r requirements.txt`.
 
-Following the master repository license.
+# License
+
+I am too lazy, so I am using MIT.
+
