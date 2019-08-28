@@ -7,7 +7,7 @@ This is the spider that convert the course information of current semester from 
 
 Demo json file can be found in the directory `demo`.
 
-Built on python3. install requirements by `pip3 install -r requirements.txt`.
+Built on python3. Install requirements by `pip3 install -r requirements.txt`.
 
 # License
 
